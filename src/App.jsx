@@ -16,23 +16,26 @@ function OutfitCard({ outfit, index }) {
   return (
     <div
       style={{
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        background: "#1a1a1f",
+        border: "1px solid rgba(255,255,255,0.06)",
         borderRadius: "16px",
         padding: "24px",
         marginBottom: "16px",
         cursor: "pointer",
         transition: "all 0.3s ease",
         animation: `fadeSlideIn 0.5s ease ${index * 0.1}s both`,
+        boxShadow: "0 2px 6px rgba(255,255,255,0.06)",
       }}
       onClick={() => setExpanded(!expanded)}
       onMouseEnter={e => {
-        e.currentTarget.style.border = "1px solid rgba(212,175,55,0.4)";
-        e.currentTarget.style.background = "rgba(212,175,55,0.04)";
+        e.currentTarget.style.border = "1px solid rgba(212,175,55,0.3)";
+        e.currentTarget.style.background = "rgba(212,175,55,0.02)";
+        e.currentTarget.style.boxShadow = "0 4px 16px rgba(255,255,255,0.1)";
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)";
-        e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+        e.currentTarget.style.border = "1px solid rgba(255,255,255,0.06)";
+        e.currentTarget.style.background = "#1a1a1f";
+        e.currentTarget.style.boxShadow = "0 2px 6px rgba(255,255,255,0.06)";
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -155,20 +158,23 @@ function ClothingCard({ item, onDelete }) {
   return (
     <div style={{
       position: "relative",
-      background: "rgba(255,255,255,0.03)",
+      background: "#1a1a1f",
       border: "1px solid rgba(255,255,255,0.06)",
       borderRadius: "12px",
       overflow: "hidden",
       transition: "all 0.25s ease",
       animation: "fadeSlideIn 0.4s ease both",
       group: true,
+      boxShadow: "0 1px 3px rgba(255,255,255,0.06)",
     }}
       onMouseEnter={e => {
-        e.currentTarget.style.border = "1px solid rgba(255,255,255,0.15)";
+        e.currentTarget.style.border = "1px solid rgba(212,175,55,0.3)";
+        e.currentTarget.style.boxShadow = "0 4px 12px rgba(255,255,255,0.1)";
         e.currentTarget.querySelector(".delete-btn").style.opacity = "1";
       }}
       onMouseLeave={e => {
         e.currentTarget.style.border = "1px solid rgba(255,255,255,0.06)";
+        e.currentTarget.style.boxShadow = "0 1px 3px rgba(255,255,255,0.06)";
         e.currentTarget.querySelector(".delete-btn").style.opacity = "0";
       }}
     >
@@ -193,7 +199,7 @@ function ClothingCard({ item, onDelete }) {
           style={{
             position: "absolute", top: "8px", right: "8px",
             background: "rgba(0,0,0,0.7)", border: "none",
-            color: "rgba(255,100,100,0.8)", borderRadius: "50%",
+            color: "rgba(200,60,60,0.8)", borderRadius: "50%",
             width: "26px", height: "26px", cursor: "pointer",
             fontSize: "12px", opacity: 0, transition: "opacity 0.2s",
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -203,7 +209,7 @@ function ClothingCard({ item, onDelete }) {
       <div style={{ padding: "12px 14px" }}>
         <div style={{
           fontFamily: "'DM Sans', sans-serif",
-          color: "rgba(255,255,255,0.8)",
+          color: "rgba(255,255,255,0.85)",
           fontSize: "13px",
           fontWeight: "500",
           marginBottom: "4px",
@@ -327,33 +333,101 @@ export default function App() {
     setIsGenerating(true);
     setActiveTab("outfits");
 
-    const wardrobeDesc = clothes.map(c =>
-      `- ${c.name} (${c.category}${c.color ? `, ${c.color}` : ""}${c.description ? `, ${c.description}` : ""})`
-    ).join("\n");
-
-    const userPrompt = prompt.trim()
-      ? `Occasion/style request: ${prompt}\n\n`
-      : "";
+    // Simulate loading delay for better UX
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-5-20250929",
-          max_tokens: 1000,
-          messages: [{
-            role: "user",
-            content: `You are a professional fashion stylist. Here is someone's wardrobe:\n\n${wardrobeDesc}\n\n${userPrompt}Create 3 stylish outfit combinations from these items. Return ONLY a JSON array with no markdown or extra text, using this exact structure:\n[\n  {\n    "title": "Outfit name",\n    "occasion": "Casual / Work / Evening / etc.",\n    "vibe": "One-line mood/aesthetic description",\n    "items": [\n      { "name": "exact item name from wardrobe", "category": "category" }\n    ],\n    "styling_tip": "One practical styling tip"\n  }\n]\n\nOnly use items from the provided wardrobe. Make outfits cohesive and fashionable.`,
-          }],
-        }),
+      // Group clothes by category
+      const byCategory = {};
+      clothes.forEach(item => {
+        if (!byCategory[item.category]) byCategory[item.category] = [];
+        byCategory[item.category].push(item);
       });
 
-      const data = await response.json();
-      const text = data.content?.map(b => b.text || "").join("") || "";
-      const cleaned = text.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(cleaned);
-      setOutfits(parsed);
+      const generatedOutfits = [];
+      const occasions = ["Casual", "Work", "Weekend", "Evening", "Day Out"];
+      const vibes = [
+        "Effortless and comfortable",
+        "Polished and put-together",
+        "Relaxed with a stylish edge",
+        "Confident and professional",
+        "Fresh and modern"
+      ];
+      const tips = [
+        "Roll up the sleeves for a more relaxed vibe",
+        "Add a belt to define your waist and create the 1/3-2/3 proportion",
+        "Layer with a jacket when it gets cooler - this 'third element' transforms the look",
+        "Keep accessories minimal for a clean look",
+        "Mix textures for visual interest and depth",
+        "Balance volumes: pair fitted pieces with looser ones",
+        "Stick to a monochromatic or neutral palette for foolproof elegance",
+        "Apply the 60-30-10 rule: 60% main color, 30% secondary, 10% accent",
+        "Remember: proper fit is more valuable than any trend or brand",
+        "Create visual balance - tight on top, loose on bottom or vice versa",
+        "Add a statement accessory as your strategic 'third element'",
+        "Neutral tones (black, white, grey, beige) never fail"
+      ];
+
+      // Helper to get random item from array
+      const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+      
+      // Helper to get random items avoiding duplicates across outfits
+      const usedItems = new Set();
+      const getRandomUnused = (arr) => {
+        const available = arr.filter(item => !usedItems.has(item.id));
+        if (available.length === 0) return getRandom(arr); // fallback if all used
+        const chosen = getRandom(available);
+        usedItems.add(chosen.id);
+        return chosen;
+      };
+
+      // Generate 3 outfits
+      for (let i = 0; i < 3; i++) {
+        const outfitItems = [];
+        
+        // Core pieces: Top + Bottom (or Dress)
+        if (byCategory.Dresses && byCategory.Dresses.length > 0 && Math.random() > 0.6) {
+          // Sometimes use a dress as the main piece
+          outfitItems.push(getRandomUnused(byCategory.Dresses));
+        } else {
+          // Standard top + bottom combination
+          if (byCategory.Tops && byCategory.Tops.length > 0) {
+            outfitItems.push(getRandomUnused(byCategory.Tops));
+          }
+          if (byCategory.Bottoms && byCategory.Bottoms.length > 0) {
+            outfitItems.push(getRandomUnused(byCategory.Bottoms));
+          }
+        }
+
+        // Add shoes if available
+        if (byCategory.Shoes && byCategory.Shoes.length > 0) {
+          outfitItems.push(getRandomUnused(byCategory.Shoes));
+        }
+
+        // Randomly add outerwear or accessories
+        if (byCategory.Outerwear && byCategory.Outerwear.length > 0 && Math.random() > 0.5) {
+          outfitItems.push(getRandomUnused(byCategory.Outerwear));
+        }
+        if (byCategory.Accessories && byCategory.Accessories.length > 0 && Math.random() > 0.4) {
+          outfitItems.push(getRandomUnused(byCategory.Accessories));
+        }
+
+        // Only create outfit if we have at least 2 items
+        if (outfitItems.length >= 2) {
+          generatedOutfits.push({
+            title: `Look ${i + 1}`,
+            occasion: prompt.trim() || getRandom(occasions),
+            vibe: getRandom(vibes),
+            items: outfitItems.map(item => ({
+              name: item.name,
+              category: item.category
+            })),
+            styling_tip: getRandom(tips)
+          });
+        }
+      }
+
+      setOutfits(generatedOutfits);
     } catch (err) {
       setError("Couldn't generate outfits. Please try again.");
       console.error(err);
@@ -381,7 +455,7 @@ export default function App() {
         <div style={{ fontSize: "36px", animation: "spin 1.5s linear infinite", color: "#D4AF37" }}>✦</div>
         <div style={{
           fontFamily: "'Space Mono', monospace",
-          color: "rgba(212,175,55,0.6)", fontSize: "11px", letterSpacing: "3px",
+          color: "#8B7355", fontSize: "11px", letterSpacing: "3px",
         }}>LOADING YOUR WARDROBE...</div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -401,8 +475,8 @@ export default function App() {
       <div style={{
         position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
         background: `
-          radial-gradient(ellipse 80% 40% at 50% -10%, rgba(212,175,55,0.08) 0%, transparent 60%),
-          radial-gradient(ellipse 40% 60% at 90% 80%, rgba(180,120,40,0.05) 0%, transparent 50%)
+          radial-gradient(ellipse 80% 40% at 50% -10%, rgba(212,175,55,0.12) 0%, transparent 60%),
+          radial-gradient(ellipse 40% 60% at 90% 80%, rgba(180,140,30,0.1) 0%, transparent 50%)
         `,
       }} />
 
@@ -415,9 +489,9 @@ export default function App() {
         * { box-sizing: border-box; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.3); border-radius: 4px; }
         input, select, textarea { outline: none; }
-        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.2); }
+        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.25); }
       `}</style>
 
       <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 24px 60px", position: "relative", zIndex: 1 }}>
@@ -433,7 +507,7 @@ export default function App() {
             fontSize: "11px",
             letterSpacing: "4px",
             marginBottom: "12px",
-            opacity: 0.8,
+            opacity: 0.9,
             display: "flex",
             alignItems: "center",
             gap: "12px",
@@ -449,14 +523,14 @@ export default function App() {
             {saveStatus === "saved" && (
               <span style={{
                 fontSize: "9px", letterSpacing: "2px",
-                color: "rgba(100,200,100,0.6)",
+                color: "rgba(80,150,90,0.8)",
                 animation: "fadeIn 0.3s ease both",
               }}>✓ SAVED</span>
             )}
             {saveStatus === "error" && (
               <span style={{
                 fontSize: "9px", letterSpacing: "2px",
-                color: "rgba(255,100,100,0.6)",
+                color: "rgba(200,80,60,0.8)",
               }}>⚠ SAVE ERROR</span>
             )}
           </div>
@@ -546,7 +620,7 @@ export default function App() {
                 <span style={{
                   marginLeft: "6px",
                   background: "#D4AF37",
-                  color: "#0A0A0C",
+                  color: "#FAF8F3",
                   borderRadius: "10px",
                   padding: "1px 7px",
                   fontSize: "10px",
@@ -680,11 +754,11 @@ export default function App() {
 
                 <div style={{ display: "flex", gap: "10px" }}>
                   <button onClick={addClothingItem} style={{
-                    background: "linear-gradient(135deg, rgba(212,175,55,0.9), rgba(180,140,30,0.9))",
-                    color: "#0A0A0C", border: "none", borderRadius: "10px",
+                    background: "linear-gradient(135deg, #D4AF37, rgba(180,140,30,0.95))",
+                    color: "#1a1a1f", border: "none", borderRadius: "10px",
                     padding: "11px 24px", cursor: "pointer", fontWeight: "700",
                     fontFamily: "'DM Sans', sans-serif", fontSize: "14px",
-                    transition: "all 0.2s",
+                    transition: "all 0.2s", boxShadow: "0 2px 8px rgba(212,175,55,0.25)",
                   }}>Add to Wardrobe</button>
                   <button onClick={() => { setAddingItem(false); setNewItem({ name: "", category: "Tops", color: "", description: "", imageUrl: "" }); }} style={{
                     background: "transparent", color: "rgba(255,255,255,0.4)",
@@ -711,22 +785,54 @@ export default function App() {
               </button>
             )}
 
-            {/* Category filter */}
+            {/* Category sections */}
             {clothes.length > 0 && (
-              <div style={{ display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" }}>
-                {["All", ...CATEGORIES.filter(c => categoryCounts[c] > 0)].map(cat => (
-                  <button key={cat} onClick={() => setActiveCategory(cat)} style={{
-                    background: activeCategory === cat ? "rgba(212,175,55,0.15)" : "rgba(255,255,255,0.03)",
-                    border: activeCategory === cat ? "1px solid rgba(212,175,55,0.4)" : "1px solid rgba(255,255,255,0.06)",
-                    color: activeCategory === cat ? "#D4AF37" : "rgba(255,255,255,0.4)",
-                    borderRadius: "20px", padding: "6px 14px", cursor: "pointer",
-                    fontFamily: "'Space Mono', monospace", fontSize: "10px",
-                    letterSpacing: "1.5px", transition: "all 0.15s ease",
-                  }}>
-                    {CATEGORY_ICONS[cat] || ""} {cat.toUpperCase()}
-                    {cat !== "All" && <span style={{ marginLeft: "6px", opacity: 0.5 }}>{categoryCounts[cat]}</span>}
-                  </button>
-                ))}
+              <div style={{ marginBottom: "24px" }}>
+                <div style={{
+                  fontFamily: "'Space Mono', monospace",
+                  fontSize: "10px",
+                  letterSpacing: "2px",
+                  color: "rgba(255,255,255,0.4)",
+                  marginBottom: "12px",
+                }}>YOUR WARDROBE BY CATEGORY</div>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  {["All", ...CATEGORIES.filter(c => categoryCounts[c] > 0)].map(cat => (
+                    <button key={cat} onClick={() => setActiveCategory(cat)} style={{
+                      background: activeCategory === cat ? "rgba(212,175,55,0.15)" : "rgba(255,255,255,0.03)",
+                      border: activeCategory === cat ? "1px solid rgba(212,175,55,0.4)" : "1px solid rgba(255,255,255,0.06)",
+                      color: activeCategory === cat ? "#D4AF37" : "rgba(255,255,255,0.4)",
+                      borderRadius: "20px", padding: "8px 16px", cursor: "pointer",
+                      fontFamily: "'Space Mono', monospace", fontSize: "10px",
+                      letterSpacing: "1.5px", transition: "all 0.15s ease",
+                      boxShadow: activeCategory === cat ? "0 2px 8px rgba(212,175,55,0.2)" : "none",
+                    }}
+                      onMouseEnter={e => {
+                        if (activeCategory !== cat) {
+                          e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                          e.currentTarget.style.borderColor = "rgba(212,175,55,0.2)";
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        if (activeCategory !== cat) {
+                          e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                          e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+                        }
+                      }}
+                    >
+                      <span style={{ fontSize: "14px", marginRight: "6px" }}>{CATEGORY_ICONS[cat] || "✦"}</span>
+                      {cat.toUpperCase()}
+                      {cat !== "All" && <span style={{ 
+                        marginLeft: "8px", 
+                        background: activeCategory === cat ? "#D4AF37" : "rgba(255,255,255,0.15)",
+                        color: activeCategory === cat ? "#FFF" : "rgba(255,255,255,0.45)",
+                        borderRadius: "10px",
+                        padding: "2px 6px",
+                        fontSize: "9px",
+                        fontWeight: "700"
+                      }}>{categoryCounts[cat]}</span>}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -763,6 +869,27 @@ export default function App() {
         {/* OUTFITS TAB */}
         {activeTab === "outfits" && (
           <div style={{ animation: "fadeIn 0.3s ease both" }}>
+            {/* Show existing outfits FIRST if they exist */}
+            {!isGenerating && outfits.length > 0 && (
+              <>
+                <div style={{
+                  fontFamily: "'Space Mono', monospace",
+                  fontSize: "10px",
+                  letterSpacing: "2px",
+                  color: "rgba(255,255,255,0.4)",
+                  marginBottom: "16px",
+                }}>YOUR GENERATED LOOKS</div>
+                {outfits.map((outfit, i) => (
+                  <OutfitCard key={i} outfit={outfit} index={i} />
+                ))}
+                <div style={{ 
+                  height: "1px", 
+                  background: "rgba(255,255,255,0.08)", 
+                  margin: "32px 0",
+                }} />
+              </>
+            )}
+
             {/* Generate prompt + button */}
             <div style={{
               background: "rgba(255,255,255,0.02)",
@@ -794,15 +921,16 @@ export default function App() {
                   disabled={isGenerating || clothes.length < 2}
                   style={{
                     background: isGenerating || clothes.length < 2
-                      ? "rgba(212,175,55,0.2)"
-                      : "linear-gradient(135deg, rgba(212,175,55,0.95), rgba(180,140,30,0.95))",
-                    color: isGenerating || clothes.length < 2 ? "rgba(255,255,255,0.3)" : "#0A0A0C",
+                      ? "rgba(212,175,55,0.15)"
+                      : "linear-gradient(135deg, #D4AF37, rgba(180,140,30,0.95))",
+                    color: isGenerating || clothes.length < 2 ? "rgba(255,255,255,0.3)" : "#1a1a1f",
                     border: "none", borderRadius: "10px", padding: "12px 24px",
                     cursor: isGenerating || clothes.length < 2 ? "not-allowed" : "pointer",
                     fontFamily: "'Space Mono', monospace", fontSize: "11px",
                     letterSpacing: "1.5px", fontWeight: "700",
                     whiteSpace: "nowrap", transition: "all 0.2s ease",
                     display: "flex", alignItems: "center", gap: "8px",
+                    boxShadow: isGenerating || clothes.length < 2 ? "none" : "0 2px 8px rgba(212,175,55,0.25)",
                   }}
                 >
                   {isGenerating ? (
@@ -816,7 +944,7 @@ export default function App() {
               {error && (
                 <p style={{
                   fontFamily: "'DM Sans', sans-serif",
-                  color: "rgba(255,100,100,0.8)", fontSize: "13px",
+                  color: "rgba(200,60,60,0.8)", fontSize: "13px",
                   margin: "10px 0 0 0",
                 }}>{error}</p>
               )}
@@ -838,12 +966,7 @@ export default function App() {
               </div>
             )}
 
-            {/* Outfit cards */}
-            {!isGenerating && outfits.length > 0 && outfits.map((outfit, i) => (
-              <OutfitCard key={i} outfit={outfit} index={i} />
-            ))}
-
-            {/* Empty state */}
+            {/* Empty state - shown when no outfits exist yet */}
             {!isGenerating && outfits.length === 0 && (
               <div style={{ textAlign: "center", padding: "80px 24px" }}>
                 <div style={{ fontSize: "40px", marginBottom: "16px", opacity: 0.2 }}>✦</div>
