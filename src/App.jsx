@@ -256,12 +256,12 @@ export default function App() {
 
   // Load persisted data on mount
   useEffect(() => {
-    const loadData = async () => {
+    const loadData = () => {
       try {
-        const clothesResult = await window.storage.get("wardrobe:clothes");
-        const outfitsResult = await window.storage.get("wardrobe:outfits");
-        if (clothesResult?.value) setClothes(JSON.parse(clothesResult.value));
-        if (outfitsResult?.value) setOutfits(JSON.parse(outfitsResult.value));
+        const clothesData = localStorage.getItem("wardrobe:clothes");
+        const outfitsData = localStorage.getItem("wardrobe:outfits");
+        if (clothesData) setClothes(JSON.parse(clothesData));
+        if (outfitsData) setOutfits(JSON.parse(outfitsData));
       } catch {
         // No saved data yet, start fresh
       } finally {
@@ -276,9 +276,9 @@ export default function App() {
     if (isLoadingData) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     setSaveStatus("saving");
-    saveTimerRef.current = setTimeout(async () => {
+    saveTimerRef.current = setTimeout(() => {
       try {
-        await window.storage.set("wardrobe:clothes", JSON.stringify(clothes));
+        localStorage.setItem("wardrobe:clothes", JSON.stringify(clothes));
         setSaveStatus("saved");
         setTimeout(() => setSaveStatus("idle"), 2000);
       } catch {
@@ -290,14 +290,11 @@ export default function App() {
   // Save outfits whenever they change
   useEffect(() => {
     if (isLoadingData || outfits.length === 0) return;
-    const saveOutfits = async () => {
-      try {
-        await window.storage.set("wardrobe:outfits", JSON.stringify(outfits));
-      } catch {
-        // silent fail for outfits
-      }
-    };
-    saveOutfits();
+    try {
+      localStorage.setItem("wardrobe:outfits", JSON.stringify(outfits));
+    } catch {
+      // silent fail for outfits
+    }
   }, [outfits, isLoadingData]);
 
   const handleFileUpload = useCallback((file) => {
