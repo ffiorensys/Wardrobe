@@ -106,8 +106,33 @@ function OutfitCard({ outfit, index }) {
                 borderRadius: "10px",
                 padding: "10px 14px",
               }}>
-                <span style={{ fontSize: "18px" }}>{CATEGORY_ICONS[item.category] || "✦"}</span>
-                <div>
+                {item.imageUrl ? (
+                  <img 
+                    src={item.imageUrl} 
+                    alt={item.name}
+                    style={{
+                      width: "50px",
+                      height: "50px",
+                      objectFit: "cover",
+                      borderRadius: "8px",
+                      border: "1px solid rgba(255,255,255,0.1)"
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    width: "50px",
+                    height: "50px",
+                    background: "rgba(255,255,255,0.05)",
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "24px"
+                  }}>
+                    {CATEGORY_ICONS[item.category] || "✦"}
+                  </div>
+                )}
+                <div style={{ flex: 1 }}>
                   <div style={{
                     fontFamily: "'DM Sans', sans-serif",
                     color: "rgba(255,255,255,0.85)",
@@ -417,7 +442,8 @@ export default function App() {
             vibe: getRandom(vibes),
             items: outfitItems.map(item => ({
               name: item.name,
-              category: item.category
+              category: item.category,
+              imageUrl: item.imageUrl || null
             })),
             styling_tip: getRandom(tips)
           });
