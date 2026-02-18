@@ -11,170 +11,115 @@ const CATEGORY_ICONS = {
   Dresses: "👗",
 };
 
-function OutfitCard({ outfit, index }) {
-  const [expanded, setExpanded] = useState(false);
+function OutfitCard({ outfit, index, onDelete }) {
   return (
     <div
       style={{
         background: "#1a1a1f",
         border: "1px solid rgba(255,255,255,0.06)",
         borderRadius: "16px",
-        padding: "24px",
+        padding: "20px",
         marginBottom: "16px",
-        cursor: "pointer",
         transition: "all 0.3s ease",
         animation: `fadeSlideIn 0.5s ease ${index * 0.1}s both`,
         boxShadow: "0 2px 6px rgba(255,255,255,0.06)",
+        position: "relative",
       }}
-      onClick={() => setExpanded(!expanded)}
       onMouseEnter={e => {
         e.currentTarget.style.border = "1px solid rgba(212,175,55,0.3)";
-        e.currentTarget.style.background = "rgba(212,175,55,0.02)";
         e.currentTarget.style.boxShadow = "0 4px 16px rgba(255,255,255,0.1)";
+        const deleteBtn = e.currentTarget.querySelector(".delete-outfit-btn");
+        if (deleteBtn) deleteBtn.style.opacity = "1";
       }}
       onMouseLeave={e => {
         e.currentTarget.style.border = "1px solid rgba(255,255,255,0.06)";
-        e.currentTarget.style.background = "#1a1a1f";
         e.currentTarget.style.boxShadow = "0 2px 6px rgba(255,255,255,0.06)";
+        const deleteBtn = e.currentTarget.querySelector(".delete-outfit-btn");
+        if (deleteBtn) deleteBtn.style.opacity = "0";
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-            <span style={{
-              background: "rgba(212,175,55,0.15)",
-              color: "#D4AF37",
-              fontSize: "11px",
-              fontFamily: "'Space Mono', monospace",
-              letterSpacing: "2px",
-              padding: "4px 10px",
-              borderRadius: "20px",
-              border: "1px solid rgba(212,175,55,0.3)",
-            }}>LOOK {String(index + 1).padStart(2, "0")}</span>
-            {outfit.occasion && (
-              <span style={{
-                background: "rgba(255,255,255,0.05)",
-                color: "rgba(255,255,255,0.5)",
-                fontSize: "11px",
-                fontFamily: "'Space Mono', monospace",
-                letterSpacing: "1px",
-                padding: "4px 10px",
-                borderRadius: "20px",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}>{outfit.occasion}</span>
-            )}
-          </div>
-          <h3 style={{
-            fontFamily: "'Playfair Display', Georgia, serif",
-            fontSize: "22px",
-            fontWeight: "700",
-            color: "#fff",
-            margin: "0 0 6px 0",
-            letterSpacing: "0.5px",
-          }}>{outfit.title}</h3>
-          <p style={{
-            fontFamily: "'DM Sans', sans-serif",
-            color: "rgba(255,255,255,0.45)",
-            fontSize: "14px",
-            margin: 0,
-            lineHeight: "1.5",
-          }}>{outfit.vibe}</p>
-        </div>
-        <span style={{
-          color: "rgba(212,175,55,0.6)",
-          fontSize: "18px",
-          transition: "transform 0.3s ease",
-          transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-          marginLeft: "16px",
-        }}>▾</span>
-      </div>
+      <button
+        className="delete-outfit-btn"
+        onClick={(e) => { e.stopPropagation(); onDelete(index); }}
+        style={{
+          position: "absolute", top: "12px", right: "12px",
+          background: "rgba(0,0,0,0.8)", border: "none",
+          color: "rgba(255,100,100,0.9)", borderRadius: "50%",
+          width: "32px", height: "32px", cursor: "pointer",
+          fontSize: "16px", opacity: 0, transition: "opacity 0.2s",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 10,
+          fontWeight: "bold",
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.background = "rgba(255,100,100,0.2)";
+          e.currentTarget.style.color = "rgba(255,100,100,1)";
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.background = "rgba(0,0,0,0.8)";
+          e.currentTarget.style.color = "rgba(255,100,100,0.9)";
+        }}
+      >✕</button>
 
-      {expanded && (
-        <div style={{
-          marginTop: "20px",
-          paddingTop: "20px",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          animation: "fadeIn 0.3s ease",
-        }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "16px" }}>
-            {outfit.items && outfit.items.map((item, i) => (
-              <div key={i} style={{
+      {/* Small label at top */}
+      <div style={{
+        fontFamily: "'Space Mono', monospace",
+        fontSize: "10px",
+        letterSpacing: "2px",
+        color: "rgba(212,175,55,0.6)",
+        marginBottom: "12px",
+      }}>LOOK {String(index + 1).padStart(2, "0")}</div>
+
+      {/* Images in a row */}
+      <div style={{
+        display: "flex",
+        gap: "12px",
+        flexWrap: "wrap",
+        justifyContent: "flex-start",
+      }}>
+        {outfit.items && outfit.items.map((item, i) => (
+          <div key={i} style={{ position: "relative" }}>
+            {item.imageUrl ? (
+              <img 
+                src={item.imageUrl} 
+                alt={item.name}
+                title={item.name} // Tooltip on hover
+                style={{
+                  width: "120px",
+                  height: "120px",
+                  objectFit: "cover",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  transition: "all 0.2s ease",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = "scale(1.05)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(212,175,55,0.3)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              />
+            ) : (
+              <div style={{
+                width: "120px",
+                height: "120px",
+                background: "rgba(255,255,255,0.05)",
+                borderRadius: "12px",
+                border: "1px solid rgba(255,255,255,0.1)",
                 display: "flex",
                 alignItems: "center",
-                gap: "12px",
-                background: "rgba(255,255,255,0.03)",
-                borderRadius: "10px",
-                padding: "10px 14px",
+                justifyContent: "center",
+                fontSize: "40px",
               }}>
-                {item.imageUrl ? (
-                  <img 
-                    src={item.imageUrl} 
-                    alt={item.name}
-                    style={{
-                      width: "50px",
-                      height: "50px",
-                      objectFit: "cover",
-                      borderRadius: "8px",
-                      border: "1px solid rgba(255,255,255,0.1)"
-                    }}
-                  />
-                ) : (
-                  <div style={{
-                    width: "50px",
-                    height: "50px",
-                    background: "rgba(255,255,255,0.05)",
-                    borderRadius: "8px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "24px"
-                  }}>
-                    {CATEGORY_ICONS[item.category] || "✦"}
-                  </div>
-                )}
-                <div style={{ flex: 1 }}>
-                  <div style={{
-                    fontFamily: "'DM Sans', sans-serif",
-                    color: "rgba(255,255,255,0.85)",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                  }}>{item.name}</div>
-                  <div style={{
-                    fontFamily: "'Space Mono', monospace",
-                    color: "rgba(255,255,255,0.3)",
-                    fontSize: "11px",
-                    letterSpacing: "1px",
-                  }}>{item.category.toUpperCase()}</div>
-                </div>
+                {CATEGORY_ICONS[item.category] || "✦"}
               </div>
-            ))}
+            )}
           </div>
-          {outfit.styling_tip && (
-            <div style={{
-              background: "rgba(212,175,55,0.06)",
-              border: "1px solid rgba(212,175,55,0.15)",
-              borderRadius: "10px",
-              padding: "12px 16px",
-            }}>
-              <span style={{
-                fontFamily: "'Space Mono', monospace",
-                color: "#D4AF37",
-                fontSize: "10px",
-                letterSpacing: "2px",
-                display: "block",
-                marginBottom: "6px",
-              }}>STYLING TIP</span>
-              <p style={{
-                fontFamily: "'DM Sans', sans-serif",
-                color: "rgba(255,255,255,0.6)",
-                fontSize: "13px",
-                margin: 0,
-                lineHeight: "1.6",
-              }}>{outfit.styling_tip}</p>
-            </div>
-          )}
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }
@@ -346,6 +291,10 @@ export default function App() {
     setClothes(prev => prev.filter(c => c.id !== id));
   };
 
+  const deleteOutfit = (index) => {
+    setOutfits(prev => prev.filter((_, i) => i !== index));
+  };
+
   const generateOutfits = async () => {
     if (clothes.length < 2) {
       setError("Add at least 2 items to generate outfits!");
@@ -403,8 +352,8 @@ export default function App() {
         return chosen;
       };
 
-      // Generate 3 outfits
-      for (let i = 0; i < 3; i++) {
+      // Generate 2 outfits
+      for (let i = 0; i < 2; i++) {
         const outfitItems = [];
         
         // Core pieces: Top + Bottom (or Dress)
@@ -450,7 +399,7 @@ export default function App() {
         }
       }
 
-      setOutfits(generatedOutfits);
+      setOutfits(prev => [...generatedOutfits, ...prev]);
     } catch (err) {
       setError("Couldn't generate outfits. Please try again.");
       console.error(err);
@@ -903,7 +852,7 @@ export default function App() {
                   marginBottom: "16px",
                 }}>YOUR GENERATED LOOKS</div>
                 {outfits.map((outfit, i) => (
-                  <OutfitCard key={i} outfit={outfit} index={i} />
+                  <OutfitCard key={i} outfit={outfit} index={i} onDelete={deleteOutfit} />
                 ))}
                 <div style={{ 
                   height: "1px", 
