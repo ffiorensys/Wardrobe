@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <style>
+      .sneaker { fill: #D4AF37; }
+      .sole { fill: #1a1a1f; }
+      .laces { fill: #fff; stroke: #D4AF37; stroke-width: 1; }
+    </style>
+  </defs>
+  
+  <!-- Sole -->
+  <ellipse class="sole" cx="50" cy="75" rx="35" ry="12"/>
+  
+  <!-- Main shoe body -->
+  <path class="sneaker" d="M 20,60 Q 15,45 25,35 L 45,35 Q 55,35 60,40 L 75,55 Q 80,60 75,65 L 20,65 Z"/>
+  
+  <!-- Shoe detail line -->
+  <path class="sneaker" d="M 30,50 Q 40,48 50,50" stroke="#1a1a1f" stroke-width="2" fill="none"/>
+  
+  <!-- Laces -->
+  <circle class="laces" cx="35" cy="42" r="2"/>
+  <circle class="laces" cx="45" cy="40" r="2"/>
+  <circle class="laces" cx="55" cy="42" r="2"/>
+  
+  <!-- Swoosh detail -->
+  <path d="M 25,55 Q 40,52 55,58" stroke="#fff" stroke-width="2.5" fill="none" opacity="0.6"/>
+</svg>
