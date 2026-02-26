@@ -2,13 +2,72 @@ import { useState, useRef, useCallback, useEffect } from "react";
 
 const CATEGORIES = ["Tops", "Bottoms", "Shoes", "Outerwear", "Accessories", "Dresses"];
 
-const CATEGORY_ICONS = {
+const CATEGORIES_ES = {
+  "Tops": "Parte Superior",
+  "Bottoms": "Parte Inferior",
+  "Shoes": "Calzado",
+  "Outerwear": "Abrigos",
+  "Accessories": "Accesorios",
+  "Dresses": "Vestidos"
+};
+
+const CATEGORÍA_ICONS = {
   Tops: "👕",
   Bottoms: "👖",
   Shoes: "👟",
   Outerwear: "🧥",
   Accessories: "👜",
   Dresses: "👗",
+};
+
+const FORMALITY_LEVELS = [
+  { value: "Casual", label: "Casual" },
+  { value: "Business Casual", label: "Casual de Negocio" },
+  { value: "Semi-formal", label: "Semi-formal" },
+  { value: "Formal", label: "Formal" }
+];
+
+const FIT_TYPES = [
+  { value: "Fitted", label: "Ajustado" },
+  { value: "Regular", label: "Regular" },
+  { value: "Loose", label: "Holgado" },
+  { value: "Oversized", label: "Muy Holgado" }
+];
+
+const MATERIALS = [
+  "Algodón", "Seda", "Lana", "Denim", "Cuero", "Lino", 
+  "Poliéster", "Cashmere", "Terciopelo", "Satén", "Otro"
+];
+
+const PATTERNS = [
+  { value: "Solid", label: "Sólido" },
+  { value: "Stripes", label: "Rayas" },
+  { value: "Floral", label: "Flores" },
+  { value: "Geometric", label: "Geométrico" },
+  { value: "Dots", label: "Puntos" },
+  { value: "Plaid", label: "Cuadros" },
+  { value: "Animal Print", label: "Estampado Animal" }
+];
+
+const SEASONS = [
+  { value: "All-year", label: "Todo el año" },
+  { value: "Spring/Summer", label: "Primavera/Verano" },
+  { value: "Fall/Winter", label: "Otoño/Invierno" }
+];
+
+const LENGTHS = {
+  tops: [
+    { value: "Cropped", label: "Corto" },
+    { value: "Regular", label: "Regular" },
+    { value: "Long", label: "Largo" },
+    { value: "Extra Long", label: "Extra Largo" }
+  ],
+  bottoms: [
+    { value: "Shorts", label: "Shorts" },
+    { value: "Cropped", label: "Corto/Capri" },
+    { value: "Regular", label: "Regular" },
+    { value: "Full-length", label: "Largo Completo" }
+  ]
 };
 
 function OutfitCard({ outfit, index, onDelete }) {
@@ -114,7 +173,7 @@ function OutfitCard({ outfit, index, onDelete }) {
                 justifyContent: "center",
                 fontSize: "40px",
               }}>
-                {CATEGORY_ICONS[item.category] || "✦"}
+                {CATEGORÍA_ICONS[item.category] || "✦"}
               </div>
             )}
           </div>
@@ -161,7 +220,7 @@ function ClothingCard({ item, onDelete }) {
           <img src={item.imageUrl} alt={item.name}
             style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
-          <span style={{ fontSize: "40px", opacity: 0.6 }}>{CATEGORY_ICONS[item.category] || "✦"}</span>
+          <span style={{ fontSize: "40px", opacity: 0.6 }}>{CATEGORÍA_ICONS[item.category] || "✦"}</span>
         )}
         <button
           className="delete-btn"
@@ -217,7 +276,20 @@ export default function App() {
   const [addingItem, setAddingItem] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [error, setError] = useState("");
-  const [newItem, setNewItem] = useState({ name: "", category: "Tops", color: "", description: "", imageUrl: "" });
+  const [newItem, setNewItem] = useState({ 
+    name: "", 
+    category: "Tops", 
+    primaryColor: "",
+    secondaryColors: "",
+    formalityLevel: "Casual",
+    fit: "Regular",
+    material: "",
+    pattern: "Solid",
+    season: "All-year",
+    length: "Full-length",
+    description: "", 
+    imageUrl: "" 
+  });
   const fileInputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
   const [saveStatus, setSaveStatus] = useState("idle"); // "idle" | "saving" | "saved" | "error"
@@ -283,7 +355,7 @@ export default function App() {
       id: Date.now() + Math.random(),
     };
     setClothes(prev => [...prev, item]);
-    setNewItem({ name: "", category: "Tops", color: "", description: "", imageUrl: "" });
+    setNewItem({ name: "", category: "Tops", primaryColor: "", secondaryColors: "", formalityLevel: "Casual", fit: "Regular", material: "", pattern: "Solid", season: "All-year", length: "Regular", description: "", imageUrl: "" });
     setAddingItem(false);
   };
 
@@ -297,111 +369,164 @@ export default function App() {
 
   const generateOutfits = async () => {
     if (clothes.length < 2) {
-      setError("Add at least 2 items to generate outfits!");
+      setError("¡Agrega al menos 2 prendas para generar outfits!");
       return;
     }
     setError("");
     setIsGenerating(true);
     setActiveTab("outfits");
 
-    // Simulate loading delay for better UX
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
     try {
-      // Group clothes by category
-      const byCategory = {};
-      clothes.forEach(item => {
-        if (!byCategory[item.category]) byCategory[item.category] = [];
-        byCategory[item.category].push(item);
+      // Preparar descripción detallada del guardarropa
+      const wardrobeDesc = clothes.map(c => {
+        let desc = `- ${c.name} (${CATEGORIES_ES[c.category] || c.category})`;
+        if (c.primaryColor) desc += `, Color: ${c.primaryColor}`;
+        if (c.formalityLevel) desc += `, Formalidad: ${c.formalityLevel}`;
+        if (c.fit) desc += `, Ajuste: ${c.fit}`;
+        if (c.material) desc += `, Material: ${c.material}`;
+        if (c.pattern) desc += `, Patrón: ${c.pattern}`;
+        if (c.season) desc += `, Temporada: ${c.season}`;
+        return desc;
+      }).join("\n");
+
+      const userOccasion = prompt.trim() 
+        ? `El usuario quiere outfits para: ${prompt}`
+        : "Crea outfits versátiles apropiados para varias ocasiones";
+
+      // Llamar a Claude API con criterios profesionales
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-5-20250929",
+          max_tokens: 2500,
+          messages: [{
+            role: "user",
+            content: `Eres un estilista profesional experto con conocimiento profundo de los principios de moda.
+
+PRINCIPIOS DE MODA A APLICAR (CRÍTICOS):
+
+1. TEORÍA DEL COLOR:
+   - Regla de los 3 colores: máximo 3 colores por outfit (60% dominante, 30% secundario, 10% acento)
+   - Esquemas efectivos: monocromático, análogo, complementario, o neutros + 1 acento
+   - Principio "Goldilocks": outfits moderadamente coordinados son MÁS fashionable
+   - Intensidad consistente: todos los colores deben tener similar saturación
+   
+2. PROPORCIONES Y SILUETA:
+   - Regla de los tercios: 1/3 arriba + 2/3 abajo (o viceversa), NUNCA 50/50
+   - Balance de volúmenes: ajustado arriba + holgado abajo (o viceversa)
+   - NUNCA todo ajustado o todo holgado simultáneamente
+   
+3. EL "TERCER ELEMENTO":
+   - Incluir una capa/accesorio extra que transforma el outfit de básico a intencional
+   - Ejemplos: chaqueta, bufanda, cinturón, reloj statement
+   
+4. FIT Y AJUSTE:
+   - El ajuste correcto es MÁS importante que cualquier marca o tendencia
+   - Priorizar prendas con fit apropiado
+   
+5. TEXTURA Y PROFUNDIDAD:
+   - Mezclar al menos 2 texturas diferentes para crear interés visual
+   - Evitar uniformidad total de materiales
+   
+6. NIVEL DE FORMALIDAD:
+   - Todas las prendas del outfit deben estar en el mismo nivel de formalidad ±1
+   - No mezclar formal con super casual
+
+GUARDARROPA DEL USUARIO:
+${wardrobeDesc}
+
+SOLICITUD: ${userOccasion}
+
+Crea 2 combinaciones de outfits siguiendo ESTRICTAMENTE los principios arriba. Retorna SOLO un array JSON (sin markdown, sin texto extra):
+
+[
+  {
+    "title": "Nombre breve del outfit",
+    "occasion": "Tipo de ocasión",
+    "vibe": "Descripción estética de una línea",
+    "items": [
+      { "name": "nombre exacto de la prenda del guardarropa", "category": "categoría" }
+    ],
+    "styling_tip": "Un tip específico aplicando los principios de moda (menciona qué principio usas: proporciones, balance de volumen, regla de color, tercer elemento, etc.)"
+  }
+]
+
+REGLAS ESTRICTAS:
+- Usa SOLO prendas del guardarropa proporcionado (nombres exactos)
+- Aplica los principios de moda para crear looks balanceados y cohesivos
+- Cada outfit debe tener 2-5 prendas
+- Respeta niveles de formalidad similares
+- Balance de volúmenes (fitted + loose)
+- Máximo 3 colores por outfit
+- Los styling tips deben referenciar principios específicos aplicados`
+          }],
+        }),
       });
 
-      const generatedOutfits = [];
-      const occasions = ["Casual", "Work", "Weekend", "Evening", "Day Out"];
-      const vibes = [
-        "Effortless and comfortable",
-        "Polished and put-together",
-        "Relaxed with a stylish edge",
-        "Confident and professional",
-        "Fresh and modern"
-      ];
-      const tips = [
-        "Roll up the sleeves for a more relaxed vibe",
-        "Add a belt to define your waist and create the 1/3-2/3 proportion",
-        "Layer with a jacket when it gets cooler - this 'third element' transforms the look",
-        "Keep accessories minimal for a clean look",
-        "Mix textures for visual interest and depth",
-        "Balance volumes: pair fitted pieces with looser ones",
-        "Stick to a monochromatic or neutral palette for foolproof elegance",
-        "Apply the 60-30-10 rule: 60% main color, 30% secondary, 10% accent",
-        "Remember: proper fit is more valuable than any trend or brand",
-        "Create visual balance - tight on top, loose on bottom or vice versa",
-        "Add a statement accessory as your strategic 'third element'",
-        "Neutral tones (black, white, grey, beige) never fail"
-      ];
-
-      // Helper to get random item from array
-      const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
-      
-      // Helper to get random items avoiding duplicates across outfits
-      const usedItems = new Set();
-      const getRandomUnused = (arr) => {
-        const available = arr.filter(item => !usedItems.has(item.id));
-        if (available.length === 0) return getRandom(arr); // fallback if all used
-        const chosen = getRandom(available);
-        usedItems.add(chosen.id);
-        return chosen;
-      };
-
-      // Generate 2 outfits
-      for (let i = 0; i < 2; i++) {
-        const outfitItems = [];
-        
-        // Core pieces: Top + Bottom (or Dress)
-        if (byCategory.Dresses && byCategory.Dresses.length > 0 && Math.random() > 0.6) {
-          // Sometimes use a dress as the main piece
-          outfitItems.push(getRandomUnused(byCategory.Dresses));
-        } else {
-          // Standard top + bottom combination
-          if (byCategory.Tops && byCategory.Tops.length > 0) {
-            outfitItems.push(getRandomUnused(byCategory.Tops));
-          }
-          if (byCategory.Bottoms && byCategory.Bottoms.length > 0) {
-            outfitItems.push(getRandomUnused(byCategory.Bottoms));
-          }
-        }
-
-        // Add shoes if available
-        if (byCategory.Shoes && byCategory.Shoes.length > 0) {
-          outfitItems.push(getRandomUnused(byCategory.Shoes));
-        }
-
-        // Randomly add outerwear or accessories
-        if (byCategory.Outerwear && byCategory.Outerwear.length > 0 && Math.random() > 0.5) {
-          outfitItems.push(getRandomUnused(byCategory.Outerwear));
-        }
-        if (byCategory.Accessories && byCategory.Accessories.length > 0 && Math.random() > 0.4) {
-          outfitItems.push(getRandomUnused(byCategory.Accessories));
-        }
-
-        // Only create outfit if we have at least 2 items
-        if (outfitItems.length >= 2) {
-          generatedOutfits.push({
-            title: `Look ${i + 1}`,
-            occasion: prompt.trim() || getRandom(occasions),
-            vibe: getRandom(vibes),
-            items: outfitItems.map(item => ({
-              name: item.name,
-              category: item.category,
-              imageUrl: item.imageUrl || null
-            })),
-            styling_tip: getRandom(tips)
-          });
-        }
+      if (!response.ok) {
+        throw new Error(`Error de API: ${response.status}`);
       }
 
-      setOutfits(prev => [...generatedOutfits, ...prev]);
+      const data = await response.json();
+      const text = data.content?.map(b => b.text || "").join("") || "";
+      const cleaned = text.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(cleaned);
+
+      // Agregar imageUrl a cada item
+      const enrichedOutfits = parsed.map(outfit => ({
+        ...outfit,
+        items: outfit.items.map(item => {
+          const fullItem = clothes.find(c => c.name === item.name);
+          return {
+            ...item,
+            imageUrl: fullItem?.imageUrl || null
+          };
+        })
+      }));
+
+      setOutfits(prev => [...enrichedOutfits, ...prev]);
     } catch (err) {
-      setError("Couldn't generate outfits. Please try again.");
+      setError("No se pudieron generar outfits. Verifica tu conexión o intenta de nuevo.");
+      console.error(err);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+RULES:
+- Only use items from the provided wardrobe (exact names)
+- Apply fashion principles to create balanced, cohesive looks
+- Each outfit should have 2-5 items
+- Styling tips should reference specific principles (proportions, volume balance, color rule, third element, etc.)`
+          }],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const text = data.content?.map(b => b.text || "").join("") || "";
+      const cleaned = text.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(cleaned);
+
+      // Add imageUrl to each item
+      const enrichedOutfits = parsed.map(outfit => ({
+        ...outfit,
+        items: outfit.items.map(item => {
+          const fullItem = clothes.find(c => c.name === item.name);
+          return {
+            ...item,
+            imageUrl: fullItem?.imageUrl || null
+          };
+        })
+      }));
+
+      setOutfits(prev => [...enrichedOutfits, ...prev]);
+    } catch (err) {
+      setError("Couldn't generate outfits. Make sure you have a valid API key or try again.");
       console.error(err);
     } finally {
       setIsGenerating(false);
@@ -428,7 +553,7 @@ export default function App() {
         <div style={{
           fontFamily: "'Space Mono', monospace",
           color: "#8B7355", fontSize: "11px", letterSpacing: "3px",
-        }}>LOADING YOUR WARDROBE...</div>
+        }}>CARGANDO TU GUARDARROPA...</div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -490,7 +615,7 @@ export default function App() {
                 fontSize: "9px", letterSpacing: "2px",
                 color: "rgba(255,255,255,0.3)",
                 animation: "shimmer 1s ease-in-out infinite",
-              }}>SAVING...</span>
+              }}>GUARDANDO...</span>
             )}
             {saveStatus === "saved" && (
               <span style={{
@@ -503,7 +628,7 @@ export default function App() {
               <span style={{
                 fontSize: "9px", letterSpacing: "2px",
                 color: "rgba(200,80,60,0.8)",
-              }}>⚠ SAVE ERROR</span>
+              }}>⚠ ERROR AL GUARDAR</span>
             )}
           </div>
           <h1 style={{
@@ -622,7 +747,7 @@ export default function App() {
                   margin: "0 0 20px 0",
                   fontSize: "18px",
                   color: "#fff",
-                }}>Add New Item</h3>
+                }}>Agregar Nueva Prenda</h3>
 
                 {/* Image drop zone */}
                 <div
@@ -656,7 +781,7 @@ export default function App() {
                     <div style={{ textAlign: "center" }}>
                       <div style={{ fontSize: "24px", marginBottom: "6px" }}>📸</div>
                       <div style={{ fontFamily: "'DM Sans', sans-serif", color: "rgba(255,255,255,0.3)", fontSize: "13px" }}>
-                        Drop photo or click to upload
+                        Arrastra una foto o haz clic para subir
                       </div>
                     </div>
                   )}
@@ -666,11 +791,11 @@ export default function App() {
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
                   <div>
-                    <label style={{ fontFamily: "'Space Mono', monospace", fontSize: "10px", letterSpacing: "2px", color: "rgba(255,255,255,0.4)", display: "block", marginBottom: "6px" }}>ITEM NAME *</label>
+                    <label style={{ fontFamily: "'Space Mono', monospace", fontSize: "10px", letterSpacing: "2px", color: "rgba(255,255,255,0.4)", display: "block", marginBottom: "6px" }}>NOMBRE DE LA PRENDA *</label>
                     <input
                       value={newItem.name}
                       onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))}
-                      placeholder="e.g. White linen shirt"
+                      placeholder="ej. White linen shirt"
                       onKeyDown={e => e.key === "Enter" && addClothingItem()}
                       style={{
                         width: "100%", background: "rgba(255,255,255,0.05)",
@@ -681,7 +806,7 @@ export default function App() {
                     />
                   </div>
                   <div>
-                    <label style={{ fontFamily: "'Space Mono', monospace", fontSize: "10px", letterSpacing: "2px", color: "rgba(255,255,255,0.4)", display: "block", marginBottom: "6px" }}>CATEGORY</label>
+                    <label style={{ fontFamily: "'Space Mono', monospace", fontSize: "10px", letterSpacing: "2px", color: "rgba(255,255,255,0.4)", display: "block", marginBottom: "6px" }}>CATEGORÍA</label>
                     <select
                       value={newItem.category}
                       onChange={e => setNewItem(p => ({ ...p, category: e.target.value }))}
@@ -699,7 +824,7 @@ export default function App() {
                     <input
                       value={newItem.color}
                       onChange={e => setNewItem(p => ({ ...p, color: e.target.value }))}
-                      placeholder="e.g. Navy blue"
+                      placeholder="ej. Navy blue"
                       style={{
                         width: "100%", background: "rgba(255,255,255,0.05)",
                         border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px",
@@ -709,11 +834,11 @@ export default function App() {
                     />
                   </div>
                   <div>
-                    <label style={{ fontFamily: "'Space Mono', monospace", fontSize: "10px", letterSpacing: "2px", color: "rgba(255,255,255,0.4)", display: "block", marginBottom: "6px" }}>DESCRIPTION</label>
+                    <label style={{ fontFamily: "'Space Mono', monospace", fontSize: "10px", letterSpacing: "2px", color: "rgba(255,255,255,0.4)", display: "block", marginBottom: "6px" }}>DESCRIPCIÓN</label>
                     <input
                       value={newItem.description}
                       onChange={e => setNewItem(p => ({ ...p, description: e.target.value }))}
-                      placeholder="e.g. Slim fit, cotton"
+                      placeholder="ej. Slim fit, cotton"
                       style={{
                         width: "100%", background: "rgba(255,255,255,0.05)",
                         border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px",
@@ -731,13 +856,13 @@ export default function App() {
                     padding: "11px 24px", cursor: "pointer", fontWeight: "700",
                     fontFamily: "'DM Sans', sans-serif", fontSize: "14px",
                     transition: "all 0.2s", boxShadow: "0 2px 8px rgba(212,175,55,0.25)",
-                  }}>Add to Wardrobe</button>
-                  <button onClick={() => { setAddingItem(false); setNewItem({ name: "", category: "Tops", color: "", description: "", imageUrl: "" }); }} style={{
+                  }}>Agregar al Guardarropa</button>
+                  <button onClick={() => { setAddingItem(false); setNewItem({ name: "", category: "Tops", primaryColor: "", secondaryColors: "", formalityLevel: "Casual", fit: "Regular", material: "", pattern: "Solid", season: "All-year", length: "Regular", description: "", imageUrl: "" }); }} style={{
                     background: "transparent", color: "rgba(255,255,255,0.4)",
                     border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px",
                     padding: "11px 20px", cursor: "pointer",
                     fontFamily: "'DM Sans', sans-serif", fontSize: "14px",
-                  }}>Cancel</button>
+                  }}>Cancelar</button>
                 </div>
               </div>
             ) : (
@@ -766,7 +891,7 @@ export default function App() {
                   letterSpacing: "2px",
                   color: "rgba(255,255,255,0.4)",
                   marginBottom: "12px",
-                }}>YOUR WARDROBE BY CATEGORY</div>
+                }}>TU GUARDARROPA POR CATEGORÍA</div>
                 <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                   {["All", ...CATEGORIES.filter(c => categoryCounts[c] > 0)].map(cat => (
                     <button key={cat} onClick={() => setActiveCategory(cat)} style={{
@@ -791,7 +916,7 @@ export default function App() {
                         }
                       }}
                     >
-                      <span style={{ fontSize: "14px", marginRight: "6px" }}>{CATEGORY_ICONS[cat] || "✦"}</span>
+                      <span style={{ fontSize: "14px", marginRight: "6px" }}>{CATEGORÍA_ICONS[cat] || "✦"}</span>
                       {cat.toUpperCase()}
                       {cat !== "All" && <span style={{ 
                         marginLeft: "8px", 
@@ -819,9 +944,9 @@ export default function App() {
                   fontFamily: "'Playfair Display', serif",
                   fontSize: "20px", color: "rgba(255,255,255,0.25)",
                   margin: "0 0 8px 0",
-                }}>Your wardrobe is empty</p>
+                }}>Tu guardarropa está vacío</p>
                 <p style={{ fontFamily: "'DM Sans', sans-serif", color: "rgba(255,255,255,0.15)", fontSize: "14px", margin: 0 }}>
-                  Add your first piece to get started
+                  Agrega tu primera prenda para empezar
                 </p>
               </div>
             ) : (
@@ -850,7 +975,7 @@ export default function App() {
                   letterSpacing: "2px",
                   color: "rgba(255,255,255,0.4)",
                   marginBottom: "16px",
-                }}>YOUR GENERATED LOOKS</div>
+                }}>TUS LOOKS GENERADOS</div>
                 {outfits.map((outfit, i) => (
                   <OutfitCard key={i} outfit={outfit} index={i} onDelete={deleteOutfit} />
                 ))}
@@ -874,12 +999,12 @@ export default function App() {
                 fontFamily: "'Space Mono', monospace",
                 fontSize: "10px", letterSpacing: "2px",
                 color: "rgba(255,255,255,0.4)", display: "block", marginBottom: "10px",
-              }}>OCCASION OR STYLE (OPTIONAL)</label>
+              }}>OCASIÓN O ESTILO (OPCIONAL)</label>
               <div style={{ display: "flex", gap: "10px" }}>
                 <input
                   value={prompt}
                   onChange={e => setPrompt(e.target.value)}
-                  placeholder="e.g. Business casual, first date, beach vacation..."
+                  placeholder="ej. Business casual, first date, beach vacation..."
                   onKeyDown={e => e.key === "Enter" && generateOutfits()}
                   style={{
                     flex: 1, background: "rgba(255,255,255,0.05)",
@@ -930,11 +1055,11 @@ export default function App() {
                   fontSize: "22px", color: "rgba(255,255,255,0.5)",
                   marginBottom: "12px",
                   animation: "shimmer 1.5s ease-in-out infinite",
-                }}>Curating your looks...</div>
+                }}>Creando tus looks...</div>
                 <div style={{
                   fontFamily: "'Space Mono', monospace",
                   color: "rgba(212,175,55,0.4)", fontSize: "11px", letterSpacing: "3px",
-                }}>YOUR AI STYLIST IS AT WORK</div>
+                }}>TU ESTILISTA IA ESTÁ TRABAJANDO</div>
               </div>
             )}
 
@@ -945,11 +1070,11 @@ export default function App() {
                 <p style={{
                   fontFamily: "'Playfair Display', serif",
                   fontSize: "20px", color: "rgba(255,255,255,0.2)", margin: "0 0 8px",
-                }}>No looks yet</p>
+                }}>Aún no hay looks</p>
                 <p style={{ fontFamily: "'DM Sans', sans-serif", color: "rgba(255,255,255,0.15)", fontSize: "14px", margin: 0 }}>
                   {clothes.length < 2
-                    ? "Add at least 2 items to your wardrobe first"
-                    : "Hit Generate Looks to get styled"}
+                    ? "Agrega al menos 2 prendas a tu guardarropa primero"
+                    : "Presiona Generar Looks para obtener estilo"}
                 </p>
               </div>
             )}
